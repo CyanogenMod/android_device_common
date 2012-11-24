@@ -30,17 +30,20 @@ include $(LOCAL_PATH)/vnd_buildcfg.mk
 
 include $(BUILD_SHARED_LIBRARY)
 
-ifeq ($(TARGET_PRODUCT), full_maguro)
-    include $(LOCAL_PATH)/conf/samsung/maguro/Android.mk
-endif
-ifeq ($(TARGET_PRODUCT), full_crespo)
-    include $(LOCAL_PATH)/conf/samsung/crespo/Android.mk
-endif
-ifeq ($(TARGET_PRODUCT), full_crespo4g)
-    include $(LOCAL_PATH)/conf/samsung/crespo4g/Android.mk
-endif
-ifeq ($(TARGET_PRODUCT), full_wingray)
-    include $(LOCAL_PATH)/conf/moto/wingray/Android.mk
-endif
+ifneq ($(TARGET_BLUETOOTH_VENDOR_CONF),)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := $(TARGET_BLUETOOTH_VENDOR_CONF)
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT)/etc/bluetooth
+
+LOCAL_MODULE_TAGS := eng
+
+LOCAL_SRC_FILES := $(LOCAL_MODULE)
+
+include $(BUILD_PREBUILT)
+
+endif # TARGET_BLUETOOTH_VENDOR_CONF
 
 endif # BOARD_HAVE_BLUETOOTH_BCM
