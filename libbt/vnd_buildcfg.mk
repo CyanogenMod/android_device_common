@@ -6,7 +6,11 @@ else
 SRC := $(call my-dir)/include/$(addprefix vnd_, $(addsuffix .txt,$(basename $(TARGET_DEVICE))))
 ifeq (,$(wildcard $(SRC)))
 # configuration file does not exist. Use default one
-SRC := $(call my-dir)/include/vnd_generic.txt
+ifeq ($(BLUETOOTH_HCI_USE_USB), true)
+SRC := $(call my-dir)/include/vnd_generic_usb.txt
+else
+ SRC := $(call my-dir)/include/vnd_generic.txt
+endif
 endif
 endif
 GEN := $(intermediates)/vnd_buildcfg.h
