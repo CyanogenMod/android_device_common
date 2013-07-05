@@ -117,7 +117,9 @@ enum {
     HW_CFG_DL_MINIDRIVER,
     HW_CFG_DL_FW_PATCH,
     HW_CFG_SET_UART_BAUD_2,
-    HW_CFG_SET_BD_ADDR
+    HW_CFG_SET_BD_ADDR,
+    HW_CFG_DL_FW_PRE_PATCH,
+    HW_CFG_DL_FW_PRE_PATCH_DONE,
 #if (USE_CONTROLLER_BDADDR == TRUE)
     , HW_CFG_READ_BD_ADDR
 #endif
@@ -170,6 +172,7 @@ extern uint8_t vnd_local_bd_addr[BD_ADDR_LEN];
 
 static char fw_patchfile_path[256] = FW_PATCHFILE_LOCATION;
 static char fw_patchfile_name[128] = { 0 };
+static char fw_prepatch_name[384] = FW_PRE_PATCH;
 #if (VENDOR_LIB_RUNTIME_TUNING_ENABLED == TRUE)
 static int fw_patch_settlement_delay = -1;
 #endif
@@ -673,6 +676,47 @@ void hw_config_cback(void *p_mem)
                     line_speed_to_userial_baud(UART_TARGET_BAUD_RATE) \
                 );
 
+                // load the prepatch
+                if (!strlen(fw_prepatch_name) ||
+                        (hw_cfg_cb.fw_fd = open(fw_prepatch_name, O_RDONLY)) == -1)
+                {
+                    hw_cfg_cb.state = HW_CFG_DL_FW_PRE_PATCH_DONE;
+                    break;
+                }
+
+                ALOGI("bt vendor lib: loading prepatch %s", fw_prepatch_name);
+                hw_cfg_cb.state = HW_CFG_DL_FW_PRE_PATCH;
+
+                // intentional fallthru
+
+            case HW_CFG_DL_FW_PRE_PATCH:
+                p_buf->len = read(hw_cfg_cb.fw_fd, p, HCI_CMD_PREAMBLE_SIZE);
+                if (p_buf->len > 0)
+                {
+                    if ((p_buf->len < HCI_CMD_PREAMBLE_SIZE) || \
+                        (opcode == HCI_VSC_LAUNCH_RAM))
+                    {
+                        ALOGW("firmware patch file might be altered!");
+                    }
+                    else
+                    {
+                        p_buf->len += read(hw_cfg_cb.fw_fd, \
+                                           p+HCI_CMD_PREAMBLE_SIZE,\
+                                           *(p+HCD_REC_PAYLOAD_LEN_BYTE));
+                        STREAM_TO_UINT16(opcode,p);
+                        is_proceeding = bt_vendor_cbacks->xmit_cb(opcode, \
+                                                p_buf, hw_config_cback);
+                        break;
+                    }
+                }
+
+                close(hw_cfg_cb.fw_fd);
+                hw_cfg_cb.fw_fd = -1;
+                hw_cfg_cb.state = HW_CFG_DL_FW_PRE_PATCH_DONE;
+
+                // intentional fallthru
+
+            case HW_CFG_DL_FW_PRE_PATCH_DONE:
                 /* read local name */
                 UINT16_TO_STREAM(p, HCI_READ_LOCAL_NAME);
                 *p = 0; /* parameter length */
