@@ -95,6 +95,15 @@
 #define UINT16_TO_STREAM(p, u16) {*(p)++ = (uint8_t)(u16); *(p)++ = (uint8_t)((u16) >> 8);}
 #define UINT32_TO_STREAM(p, u32) {*(p)++ = (uint8_t)(u32); *(p)++ = (uint8_t)((u32) >> 8); *(p)++ = (uint8_t)((u32) >> 16); *(p)++ = (uint8_t)((u32) >> 24);}
 
+#if (USE_AXI_BRIDGE_LOCK == TRUE)
+#define BTLOCK_DEV "/dev/btlock"
+static int btlock_cookie = 'B' | 'T'<<8 | '3'<<16 | '5'<<24;
+struct btlock {
+    int lock;
+    int cookie;
+};
+#endif
+
 /******************************************************************************
 **  Local type definitions
 ******************************************************************************/
@@ -568,6 +577,53 @@ static uint8_t hw_config_read_bdaddr(HC_BT_HDR *p_buf)
 }
 #endif // (USE_CONTROLLER_BDADDR == TRUE)
 
+#if (USE_AXI_BRIDGE_LOCK == TRUE)
+/*******************************************************************************
+**
+** Function         axi_bridge_lock
+**
+** Description      Take semaphore to prevent concurrent BT/WiFi firmware loading
+**
+*******************************************************************************/
+void axi_bridge_lock(int locked)
+{
+    int fd = -1;
+    struct btlock lock;
+    int ret = 0;
+
+    ALOGI("axi_bridge_lock: locked=%d", locked);
+
+    fd = open(BTLOCK_DEV, O_WRONLY);
+    if (fd < 0)
+    {
+        ALOGE("axi_bridge_lock open failed: %s (%d)",
+                strerror(errno), errno);
+        return;
+    }
+
+    lock.lock = locked;
+    lock.cookie = btlock_cookie;
+
+    if (locked)
+    {
+        while ((ret = write(fd, &lock, sizeof(lock))) != 0) {
+            ALOGE("axi_bridge_lock acquire: %s (%d)",
+                    strerror(errno), errno);
+            usleep(10000);
+        }
+    } else {
+        if (write(fd, &lock, sizeof(lock)) < 0)
+        {
+            ALOGE("axi_bridge_lock write failed: %s (%d)",
+                    strerror(errno), errno);
+        }
+    }
+
+    if (fd >= 0)
+        close(fd);
+}
+#endif // USE_AXI_BRIDGE_LOCK
+
 /*******************************************************************************
 **
 ** Function         hw_config_cback
@@ -712,6 +768,10 @@ void hw_config_cback(void *p_mem)
 
                 close(hw_cfg_cb.fw_fd);
                 hw_cfg_cb.fw_fd = -1;
+
+#if (USE_AXI_BRIDGE_LOCK == TRUE)
+                axi_bridge_lock(0);
+#endif
 
                 /* Normally the firmware patch configuration file
                  * sets the new starting baud rate at 115200.

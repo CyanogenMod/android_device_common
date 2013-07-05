@@ -49,6 +49,10 @@
 #define VENDOR_LIB_RUNTIME_TUNING_ENABLED   FALSE
 #endif
 
+#ifndef USE_AXI_BRIDGE_LOCK
+#define USE_AXI_BRIDGE_LOCK FALSE
+#endif
+
 /* Run-time configuration file */
 #ifndef VENDOR_LIB_CONF_FILE
 #define VENDOR_LIB_CONF_FILE "/etc/bluetooth/bt_vendor.conf"
