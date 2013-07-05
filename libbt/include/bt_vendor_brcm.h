@@ -72,6 +72,10 @@
 #define UART_TARGET_BAUD_RATE           3000000
 #endif
 
+#ifndef FW_PRE_PATCH
+#define FW_PRE_PATCH ""
+#endif
+
 /* The millisecond delay pauses on HCI transport after firmware patches
  * were downloaded. This gives some time for firmware to restart with
  * patches before host attempts to send down any HCI commands.
