@@ -42,7 +42,8 @@ then
 fi
 shift
 
-DEVICES="maguro toro toroplus grouper manta mako"
+DEVICES=$(for i in device/*/*/proprietary-blobs.txt ; do basename $(dirname $i) ; done)
+
 export LC_ALL=C
 
 repo sync -j32 -n
@@ -60,20 +61,19 @@ else
   for DEVICENAME in $DEVICES
   do
     rm -rf out
-    lunch full_$DEVICENAME-user
+    lunch aosp_$DEVICENAME-user
     make -j32
     cat out/target/product/$DEVICENAME/installed-files.txt |
       cut -b 15- |
       sort -f > $ARCHIVEDIR/$DEVICENAME-with.txt
   done
-  rm -rf device/asus/tilapia
-  rm -rf hardware/broadcom/nfc
-  rm -rf packages/apps/UnifiedEmail
   rm -rf vendor
+  rm -rf hardware/qcom/camera
+  rm -rf hardware/qcom/gps
   for DEVICENAME in $DEVICES
   do
     rm -rf out
-    lunch full_$DEVICENAME-user
+    lunch aosp_$DEVICENAME-user
     make -j32
     cat out/target/product/$DEVICENAME/installed-files.txt |
       cut -b 15- |
