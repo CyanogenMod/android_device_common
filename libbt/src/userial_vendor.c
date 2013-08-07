@@ -68,6 +68,7 @@ typedef struct
 ******************************************************************************/
 
 static vnd_userial_cb_t vnd_userial;
+static int vnd_userial_force_2stopbits = UART_FORCE_TWO_STOPBITS;
 
 /*****************************************************************************
 **   Helper Functions
@@ -215,10 +216,10 @@ int userial_vendor_open(tUSERIAL_CFG *p_cfg)
         return -1;
     }
 
-    if(p_cfg->fmt & USERIAL_STOPBITS_1)
-        stop_bits = 0;
-    else if(p_cfg->fmt & USERIAL_STOPBITS_2)
+    if(vnd_userial_force_2stopbits || (p_cfg->fmt & USERIAL_STOPBITS_2))
         stop_bits = CSTOPB;
+    else if(p_cfg->fmt & USERIAL_STOPBITS_1)
+        stop_bits = 0;
     else
     {
         ALOGE("userial vendor open: unsupported stop bits");
@@ -356,6 +357,25 @@ int userial_set_port(char *p_conf_name, char *p_conf_value, int param)
 {
     strcpy(vnd_userial.port_name, p_conf_value);
 
+    return 0;
+}
+
+/*******************************************************************************
+**
+** Function        userial_set_force_use_2_stop_bits
+**
+** Description     Configure UART port name
+**
+** Returns         0 : Success
+**                 Otherwise : Fail
+**
+*******************************************************************************/
+int userial_set_force_use_2_stop_bits(char *p_conf_name, char *p_conf_value, int param)
+{
+    if (strcmp(p_conf_value, "true") == 0)
+        vnd_userial_force_2stopbits = TRUE;
+    else
+        vnd_userial_force_2stopbits = FALSE;
     return 0;
 }
 

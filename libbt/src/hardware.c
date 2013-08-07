@@ -1335,6 +1335,25 @@ int hw_set_patch_file_name(char *p_conf_name, char *p_conf_value, int param)
     return 0;
 }
 
+/*******************************************************************************
+**
+** Function        hw_set_pre_patch_file_name
+**
+** Description     Give the specific firmware pre-patch filename
+**
+** Returns         0 : Success
+**                 Otherwise : Fail
+**
+*******************************************************************************/
+int hw_set_pre_patch_file_name(char *p_conf_name, char *p_conf_value, int param)
+{
+
+    strcpy(fw_prepatch_name, p_conf_value);
+
+    return 0;
+}
+
+
 #if (VENDOR_LIB_RUNTIME_TUNING_ENABLED == TRUE)
 /*******************************************************************************
 **

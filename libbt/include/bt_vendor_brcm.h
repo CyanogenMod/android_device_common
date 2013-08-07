@@ -76,6 +76,11 @@
 #define FW_PRE_PATCH ""
 #endif
 
+/* Force use of two stop bits */
+#ifndef UART_FORCE_TWO_STOPBITS
+#define UART_FORCE_TWO_STOPBITS FALSE
+#endif
+
 /* The millisecond delay pauses on HCI transport after firmware patches
  * were downloaded. This gives some time for firmware to restart with
  * patches before host attempts to send down any HCI commands.
