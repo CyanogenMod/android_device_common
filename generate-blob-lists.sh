@@ -42,13 +42,13 @@ then
 fi
 shift
 
-DEVICES=$(for i in device/*/*/proprietary-blobs.txt ; do basename $(dirname $i) ; done)
-
-export LC_ALL=C
-
 repo sync -j32 -n
 repo sync -j32 -n
 repo sync -j2 -l
+
+DEVICES=$(for i in device/*/*/proprietary-blobs.txt ; do basename $(dirname $i) ; done)
+
+export LC_ALL=C
 
 ARCHIVEDIR=archive-$(date +%s)
 if test -d archive-ref
@@ -68,7 +68,6 @@ else
       sort -f > $ARCHIVEDIR/$DEVICENAME-with.txt
   done
   rm -rf vendor
-  rm -rf hardware/qcom/camera
   rm -rf hardware/qcom/gps
   for DEVICENAME in $DEVICES
   do
@@ -113,7 +112,7 @@ do
     (
       cd device/$MANUFACTURERNAME/$DEVICENAME
       git add .
-      git commit -m "$(echo -e 'auto-generated blob list\n\nBug: 4295425')"
+      git commit -m "$(echo -e 'auto-generated blob list for '$DEVICENAME'\n\nBug: 4295425')"
       if test "$1" != "" -a "$2" != ""
       then
         echo uploading to server $1 branch $2
